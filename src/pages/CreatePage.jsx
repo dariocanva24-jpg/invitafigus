@@ -108,8 +108,27 @@ export default function CreatePage() {
     }
   }
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     setIsLoading(true)
+
+    // ENVIAR DATOS A GOOGLE FORM
+    try {
+      const { sendToGoogleForm } = await import('../services/googleForm')
+      await sendToGoogleForm({
+        nombre: formData.childName,
+        edad: formData.honoreeAge,
+        equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
+        fecha: formData.date,
+        hora: `${formData.startTime} - ${formData.endTime}`,
+        lugar: formData.location || formData.address,
+        contacto: `${formData.honoreeName || formData.childName} (padre/madre)`,
+        telefono: formData.contactWhatsApp,
+        email: formData.email
+      })
+      console.log('✅ Datos enviados a Google Forms')
+    } catch (error) {
+      console.error('❌ Error enviando a Google Forms:', error)
+    }
 
     setTimeout(() => {
       const invitation = createInvitation({
