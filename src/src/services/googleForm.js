@@ -25,7 +25,7 @@ export async function sendToGoogleForm(data) {
   formData.append(ENTRIES.fecha, data.fecha || '');
   formData.append(ENTRIES.hora, data.hora || '');
   formData.append(ENTRIES.lugar, data.lugar || '');
-  formData.append(ENTRIES.lugar2, data.lugar || ''); // mismo valor para ambos "Dónde"
+  formData.append(ENTRIES.lugar2, data.lugar || '');
   formData.append(ENTRIES.contacto, data.contacto || '');
   formData.append(ENTRIES.telefono, data.telefono || '');
   formData.append(ENTRIES.email, data.email || '');

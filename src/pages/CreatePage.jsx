@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Camera, Shield, Check, X, Star, Calendar, Clock, MapPin, Phone, Mail } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import PlayerCard from '../components/invitation/PlayerCard'
+import { sendToGoogleForm } from '../services/googleForm'
 
 // ─── DATOS ─────────────────────────────────────────
 
@@ -113,7 +114,6 @@ export default function CreatePage() {
 
     // ENVIAR DATOS A GOOGLE FORM
     try {
-      const { sendToGoogleForm } = await import('../services/googleForm')
       await sendToGoogleForm({
         nombre: formData.childName,
         edad: formData.honoreeAge,
