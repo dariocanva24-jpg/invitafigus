@@ -54,6 +54,9 @@ export default function CreatePage() {
   const [errors, setErrors] = useState({})
 
   const totalSteps = 5
+  const handleBack = () => {
+  if (step > 1) setStep(step - 1)
+}
 
   const handleNext = () => {
   console.log("BOTON APRETADO - handleNext")
@@ -171,7 +174,7 @@ const validateStep = () => {
   
   // Mostrar mensaje de confirmación
   setTimeout(() => {
-    alert('¡Gracias por tu pago! 🎉\n\nEnvianos el comprobante por WhatsApp y te activamos tu invitación en minutos.\n\nTe redirigimos a WhatsApp...')
+    alert('¡Gracias! 🎉\n\nEnvianos el comprobante por WhatsApp y te activamos tu invitación en minutos.\n\nTe redirigimos a WhatsApp...')
     
     // Abrir WhatsApp con mensaje predefinido
     const mensaje = `Hola! Acabo de pagar la invitación de ${formData.childName}. ¿Podés activarla?`
@@ -181,6 +184,12 @@ const validateStep = () => {
 
 const handleSeeLater = () => {
   if (createdInvitation) {
+    // Guardar en localStorage para que no se pierda al recargar
+    const savedSlugs = JSON.parse(localStorage.getItem('invitafigus_saved_slugs') || '[]')
+    if (!savedSlugs.includes(createdInvitation.slug)) {
+      savedSlugs.unshift(createdInvitation.slug)
+      localStorage.setItem('invitafigus_saved_slugs', JSON.stringify(savedSlugs.slice(0, 10)))
+    }
     navigate(`/invitacion/${createdInvitation.slug}`)
   }
 }
@@ -564,10 +573,8 @@ const handleSeeLater = () => {
           )}
 
           {/* PASO 6: PREVIEW DE LA FIGURITA */}
-          {(() => { console.log("Render - step:", step, "createdInvitation:", createdInvitation); return null })()}
-
+          
 {step === 6 && createdInvitation && (
-          {step === 6 && createdInvitation && (
             <motion.div
               key="step6"
               initial={{ opacity: 0, scale: 0.9 }}

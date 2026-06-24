@@ -583,7 +583,7 @@ export default function HomePage() {
             <span className="text-white/20 text-xs">2026</span>
           </div>
           <p className="text-white/20 text-xs">
-            Invitaciones digitales futboleras para cumpleaños infantiles
+            Invitaciones digitales futboleras para cumpleañeros de todas las edades
           </p>
         </div>
       </footer>
