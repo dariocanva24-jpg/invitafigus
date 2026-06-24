@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Sparkles, Camera, Share2, Star, ChevronDown, MessageCircle, Clock, Shield, Zap, Heart, Trophy, X, Check } from 'lucide-react'
 
 // Número de WhatsApp - CAMBIAR POR TU NÚMERO REAL
-const WHATSAPP_NUMBER = '5491112345678'
+const WHATSAPP_NUMBER = '5493885212331'
 
 // ─── DATOS ─────────────────────────────────────────
 

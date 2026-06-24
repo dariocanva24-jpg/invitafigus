@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Camera, Shield, Check, X, Star, Calendar, Cl
 import { useApp } from '../context/AppContext'
 import PlayerCard from '../components/invitation/PlayerCard'
 import { sendToGoogleForm } from '../services/googleForm'
+const WHATSAPP_NUMBER = '5493885212331'
 
 // ─── DATOS ─────────────────────────────────────────
 
@@ -161,18 +162,27 @@ const validateStep = () => {
 }
 
   const handleActivate = () => {
-    window.open('https://mpago.la/1X2RD5k', '_blank')
+  // Abrir MercadoPago
+  window.open('https://mpago.la/1X2RD5k', '_blank')
+  
+  // Cerrar el modal de pago
+  setShowPaymentModal(false)
+  
+  // Mostrar mensaje de confirmación
+  setTimeout(() => {
+    alert('¡Gracias por tu pago! 🎉\n\nEnvianos el comprobante por WhatsApp y te activamos tu invitación en minutos.\n\nTe redirigimos a WhatsApp...')
+    
+    // Abrir WhatsApp con mensaje predefinido
+    const mensaje = `Hola! Acabo de pagar la invitación de ${formData.childName}. ¿Podés activarla?`
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`, '_blank')
+  }, 500)
+}
 
-    if (createdInvitation) {
-      navigate(`/invitacion/${createdInvitation.slug}`)
-    }
+const handleSeeLater = () => {
+  if (createdInvitation) {
+    navigate(`/invitacion/${createdInvitation.slug}`)
   }
-
-  const handleSeeLater = () => {
-    if (createdInvitation) {
-      navigate(`/invitacion/${createdInvitation.slug}`)
-    }
-  }
+}
 
   const updateField = (field, value) => {
     setFormData({ ...formData, [field]: value })
