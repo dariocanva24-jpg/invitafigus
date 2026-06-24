@@ -573,8 +573,7 @@ const handleSeeLater = () => {
           )}
 
           {/* PASO 6: PREVIEW DE LA FIGURITA */}
-          
-{step === 6 && createdInvitation && (
+          {step === 6 && createdInvitation && (
             <motion.div
               key="step6"
               initial={{ opacity: 0, scale: 0.9 }}
