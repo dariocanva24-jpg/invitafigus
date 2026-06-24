@@ -279,7 +279,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Invitaciones digitales premium estilo FIFA personalizadas con su foto, su equipo favorito y todos los datos del cumpleaños.
+            Invitaciones digitales premium estilo FIFA para cumpleañeros de todas las edades. Personalizadas con su foto, su equipo favorito y los datos del evento. ¡Niños, jóvenes y adultos pueden ser la estrella!
           </motion.p>
 
           <motion.div

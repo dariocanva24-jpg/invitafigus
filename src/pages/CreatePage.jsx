@@ -350,7 +350,7 @@ const handleSeeLater = () => {
                 <span className="text-[10px] text-[#FFD700] tracking-[0.3em] uppercase">Figurita 1</span>
                 <h2 className="text-3xl font-black font-bebas tracking-wider mt-2">Los datos del crack</h2>
                 <p className="text-white/40 text-sm mt-2">
-                  Como van a salir impresos en la figurita.
+                  Los datos del cumpleañero, sin importar la edad. ¡Todos pueden ser la estrella!
                 </p>
               </div>
 
