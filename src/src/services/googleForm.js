@@ -1,7 +1,7 @@
-// ID del formulario de Google
+// services/googleForm.js
+
 const FORM_ID = '1GN3ADCmswrabdqLekeLk1d-ABgZKdguLI5Yem3i6pf8';
 
-// Entry IDs de cada pregunta
 const ENTRIES = {
   nombre: 'entry.226322802',
   edad: 'entry.1127303934',
@@ -16,20 +16,19 @@ const ENTRIES = {
 };
 
 export function sendToGoogleForm(data) {
+
   return new Promise((resolve) => {
-    // Crear un iframe invisible
+
     const iframe = document.createElement('iframe');
     iframe.name = 'googleFormIframe';
     iframe.style.display = 'none';
     document.body.appendChild(iframe);
 
-    // Crear un formulario
     const form = document.createElement('form');
     form.action = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
     form.method = 'POST';
     form.target = 'googleFormIframe';
 
-    // Función para agregar campos
     const addField = (name, value) => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -38,7 +37,6 @@ export function sendToGoogleForm(data) {
       form.appendChild(input);
     };
 
-    // Agregar todos los campos
     addField(ENTRIES.nombre, data.nombre);
     addField(ENTRIES.edad, data.edad);
     addField(ENTRIES.equipo, data.equipo);
@@ -50,18 +48,15 @@ export function sendToGoogleForm(data) {
     addField(ENTRIES.telefono, data.telefono);
     addField(ENTRIES.email, data.email);
 
-    // Agregar campos requeridos por Google
     addField('fvv', '1');
     addField('draftResponse', '[]');
     addField('pageHistory', '0');
 
-    // Agregar formulario al DOM y enviar
     document.body.appendChild(form);
     form.submit();
 
-    console.log('✅ Formulario enviado a Google Forms');
+    console.log('✅ Formulario enviado');
 
-    // Limpiar después de 3 segundos
     setTimeout(() => {
       document.body.removeChild(form);
       document.body.removeChild(iframe);

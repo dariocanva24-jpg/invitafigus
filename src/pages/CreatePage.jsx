@@ -54,47 +54,52 @@ export default function CreatePage() {
   const totalSteps = 5
 
   const handleNext = () => {
-    if (validateStep()) {
-      if (step < totalSteps) {
-        setStep(step + 1)
-      } else {
-        handlePreview()
-      }
+  console.log("BOTON APRETADO - handleNext")
+  console.log("step:", step, "totalSteps:", totalSteps)
+  if (validateStep()) {
+    console.log("validateStep PASÓ")
+    if (step < totalSteps) {
+      console.log("Avanzando a paso:", step + 1)
+      setStep(step + 1)
+    } else {
+      console.log("ULTIMO PASO - llamando handlePreview")
+      handlePreview()
     }
+  } else {
+    console.log("validateStep FALLÓ")
+  }
+}
+
+const validateStep = () => {
+  const newErrors = {}
+  console.log("Validando paso:", step)
+
+  switch (step) {
+    case 1:
+      if (!formData.honoreePhoto) newErrors.honoreePhoto = 'Subí una foto'
+      break
+    case 2:
+      if (!formData.team) newErrors.team = 'Elegí un equipo'
+      break
+    case 3:
+      if (!formData.childName.trim()) newErrors.childName = 'El nombre es obligatorio'
+      if (!formData.honoreeAge) newErrors.honoreeAge = 'La edad es obligatoria'
+      break
+    case 4:
+      if (!formData.date) newErrors.date = 'La fecha es obligatoria'
+      if (!formData.startTime) newErrors.startTime = 'El horario de inicio es obligatorio'
+      if (!formData.endTime) newErrors.endTime = 'El horario de fin es obligatorio'
+      if (!formData.address) newErrors.address = 'La dirección es obligatoria'
+      break
+    case 5:
+      if (!formData.email) newErrors.email = 'El email es obligatorio'
+      break
   }
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1)
-  }
-
-  const validateStep = () => {
-    const newErrors = {}
-
-    switch (step) {
-      case 1:
-        if (!formData.honoreePhoto) newErrors.honoreePhoto = 'Subí una foto'
-        break
-      case 2:
-        if (!formData.team) newErrors.team = 'Elegí un equipo'
-        break
-      case 3:
-        if (!formData.childName.trim()) newErrors.childName = 'El nombre es obligatorio'
-        if (!formData.honoreeAge) newErrors.honoreeAge = 'La edad es obligatoria'
-        break
-      case 4:
-        if (!formData.date) newErrors.date = 'La fecha es obligatoria'
-        if (!formData.startTime) newErrors.startTime = 'El horario de inicio es obligatorio'
-        if (!formData.endTime) newErrors.endTime = 'El horario de fin es obligatorio'
-        if (!formData.address) newErrors.address = 'La dirección es obligatoria'
-        break
-      case 5:
-        if (!formData.email) newErrors.email = 'El email es obligatorio'
-        break
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  console.log("Errores encontrados:", newErrors)
+  setErrors(newErrors)
+  return Object.keys(newErrors).length === 0
+}
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0]
@@ -110,12 +115,12 @@ export default function CreatePage() {
   }
 
   const handlePreview = async () => {
-    console.log('🚀 handlePreview iniciado')
-    setIsLoading(true)
+  console.log('🚀 handlePreview iniciado')
+  setIsLoading(true)
 
-    // ENVIAR DATOS A GOOGLE FORM
-    console.log('📤 Preparando datos para Google Forms...')
-    console.log('Datos a enviar:', {
+  try {
+    console.log('📤 Llamando sendToGoogleForm...')
+    await sendToGoogleForm({
       nombre: formData.childName,
       edad: formData.honoreeAge,
       equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
@@ -126,48 +131,34 @@ export default function CreatePage() {
       telefono: formData.contactWhatsApp,
       email: formData.email
     })
-
-    try {
-      console.log('📤 Llamando a sendToGoogleForm...')
-      await sendToGoogleForm({
-        nombre: formData.childName,
-        edad: formData.honoreeAge,
-        equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
-        fecha: formData.date,
-        hora: `${formData.startTime} - ${formData.endTime}`,
-        lugar: formData.location || formData.address,
-        contacto: `${formData.honoreeName || formData.childName} (padre/madre)`,
-        telefono: formData.contactWhatsApp,
-        email: formData.email
-      })
-      console.log('✅ sendToGoogleForm completado')
-    } catch (error) {
-      console.error('❌ Error en sendToGoogleForm:', error)
-    }
-
-    console.log('⏳ Esperando 2.5 segundos para createInvitation...')
-
-    setTimeout(() => {
-      console.log('🎨 Creando invitación...')
-      try {
-        const invitation = createInvitation({
-          ...formData,
-          honoreeAge: parseInt(formData.honoreeAge),
-          time: `${formData.startTime} - ${formData.endTime}`,
-          slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
-          status: 'preview',
-        })
-        console.log('✅ Invitación creada:', invitation)
-
-        setCreatedInvitation(invitation)
-        setIsLoading(false)
-        setStep(6)
-      } catch (error) {
-        console.error('❌ Error en createInvitation:', error)
-        setIsLoading(false)
-      }
-    }, 2500)
+    console.log('✅ sendToGoogleForm completado')
+  } catch (error) {
+    console.error('❌ Error sendToGoogleForm:', error)
   }
+
+  console.log('⏳ Esperando setTimeout...')
+
+  setTimeout(() => {
+    console.log('🎨 Dentro de setTimeout - creando invitación...')
+    try {
+      const invitation = createInvitation({
+        ...formData,
+        honoreeAge: parseInt(formData.honoreeAge),
+        time: `${formData.startTime} - ${formData.endTime}`,
+        slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
+        status: 'preview',
+      })
+      console.log('✅ Invitación creada:', invitation)
+      setCreatedInvitation(invitation)
+      console.log('Paso 6 - setStep(6)')
+      setStep(6)
+      setIsLoading(false)
+    } catch (error) {
+      console.error('❌ Error en createInvitation:', error)
+      setIsLoading(false)
+    }
+  }, 2500)
+}
 
   const handleActivate = () => {
     window.open('https://mpago.la/1X2RD5k', '_blank')
@@ -562,6 +553,9 @@ export default function CreatePage() {
           )}
 
           {/* PASO 6: PREVIEW DE LA FIGURITA */}
+          {(() => { console.log("Render - step:", step, "createdInvitation:", createdInvitation); return null })()}
+
+{step === 6 && createdInvitation && (
           {step === 6 && createdInvitation && (
             <motion.div
               key="step6"
