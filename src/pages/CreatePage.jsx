@@ -110,10 +110,25 @@ export default function CreatePage() {
   }
 
   const handlePreview = async () => {
+    console.log('🚀 handlePreview iniciado')
     setIsLoading(true)
 
     // ENVIAR DATOS A GOOGLE FORM
+    console.log('📤 Preparando datos para Google Forms...')
+    console.log('Datos a enviar:', {
+      nombre: formData.childName,
+      edad: formData.honoreeAge,
+      equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
+      fecha: formData.date,
+      hora: `${formData.startTime} - ${formData.endTime}`,
+      lugar: formData.location || formData.address,
+      contacto: `${formData.honoreeName || formData.childName} (padre/madre)`,
+      telefono: formData.contactWhatsApp,
+      email: formData.email
+    })
+
     try {
+      console.log('📤 Llamando a sendToGoogleForm...')
       await sendToGoogleForm({
         nombre: formData.childName,
         edad: formData.honoreeAge,
@@ -125,23 +140,32 @@ export default function CreatePage() {
         telefono: formData.contactWhatsApp,
         email: formData.email
       })
-      console.log('✅ Datos enviados a Google Forms')
+      console.log('✅ sendToGoogleForm completado')
     } catch (error) {
-      console.error('❌ Error enviando a Google Forms:', error)
+      console.error('❌ Error en sendToGoogleForm:', error)
     }
 
-    setTimeout(() => {
-      const invitation = createInvitation({
-        ...formData,
-        honoreeAge: parseInt(formData.honoreeAge),
-        time: `${formData.startTime} - ${formData.endTime}`,
-        slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
-        status: 'preview',
-      })
+    console.log('⏳ Esperando 2.5 segundos para createInvitation...')
 
-      setCreatedInvitation(invitation)
-      setIsLoading(false)
-      setStep(6)
+    setTimeout(() => {
+      console.log('🎨 Creando invitación...')
+      try {
+        const invitation = createInvitation({
+          ...formData,
+          honoreeAge: parseInt(formData.honoreeAge),
+          time: `${formData.startTime} - ${formData.endTime}`,
+          slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
+          status: 'preview',
+        })
+        console.log('✅ Invitación creada:', invitation)
+
+        setCreatedInvitation(invitation)
+        setIsLoading(false)
+        setStep(6)
+      } catch (error) {
+        console.error('❌ Error en createInvitation:', error)
+        setIsLoading(false)
+      }
     }, 2500)
   }
 
