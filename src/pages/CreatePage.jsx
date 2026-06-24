@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Camera, Shield, Check, X, Star, Calendar, Clock, MapPin, Phone, Mail } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import PlayerCard from '../components/invitation/PlayerCard'
+import Watermark from '../components/invitation/Watermark'
 import { sendToGoogleForm } from '../services/googleForm'
 const WHATSAPP_NUMBER = '5493885212331'
 
@@ -585,7 +586,7 @@ const handleSeeLater = () => {
                 </motion.div>
                 <h2 className="text-3xl font-black font-bebas tracking-wider">¡Tu figurita está lista!</h2>
                 <p className="text-white/40 text-sm mt-2">
-                  Mirá cómo quedó. Si te gusta, activala para compartirla.
+                  Vista previa con marca de agua. Al pagar, recibís la versión HD sin marca lista para compartir.
                 </p>
               </div>
 
@@ -595,7 +596,10 @@ const handleSeeLater = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <PlayerCard event={createdInvitation} />
+                <div className="relative">
+  <PlayerCard event={createdInvitation} />
+  <Watermark />
+</div>
               </motion.div>
 
               {/* Info del evento */}
