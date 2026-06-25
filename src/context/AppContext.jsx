@@ -1,13 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-// ============================================
-// 1. CREAR EL CONTEXTO
-// ============================================
 const AppContext = createContext(null);
 
-// ============================================
-// 2. HOOK PARA USAR EL CONTEXTO
-// ============================================
 export function useApp() {
   const context = useContext(AppContext);
   if (!context) {
@@ -16,9 +10,6 @@ export function useApp() {
   return context;
 }
 
-// ============================================
-// 3. DEMO DATA (siempre disponible, no depende de localStorage)
-// ============================================
 const DEMO_INVITATIONS = [
   {
     id: 'inv-demo-thiago-8-argentina',
@@ -40,12 +31,10 @@ const DEMO_INVITATIONS = [
     createdAt: new Date().toISOString(),
     rsvpList: [],
     views: 0,
+    status: 'active',
   }
 ];
 
-// ============================================
-// 4. LOCALSTORAGE
-// ============================================
 const STORAGE_KEY = 'invitafigus_data';
 
 function loadFromStorage() {
@@ -53,7 +42,6 @@ function loadFromStorage() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Merge demos con datos guardados (los demos siempre existen)
       const existingSlugs = new Set(parsed.invitations.map(inv => inv.slug));
       const demosToAdd = DEMO_INVITATIONS.filter(demo => !existingSlugs.has(demo.slug));
       return {
@@ -65,7 +53,6 @@ function loadFromStorage() {
     console.error('Error cargando desde localStorage:', error);
   }
 
-  // Si no hay nada guardado, devolver solo las demos
   return {
     invitations: [...DEMO_INVITATIONS],
   };
@@ -79,9 +66,6 @@ function saveToStorage(data) {
   }
 }
 
-// ============================================
-// 5. PROVIDER
-// ============================================
 export function AppProvider({ children }) {
   const [data, setData] = useState(loadFromStorage);
   const [currentInvitation, setCurrentInvitation] = useState(null);
@@ -115,7 +99,6 @@ export function AppProvider({ children }) {
     return data.invitations.find((inv) => inv.slug === slug) || null;
   }, [data]);
 
-  // Alias para compatibilidad con InvitationPage.jsx
   const getEventBySlug = useCallback((slug) => {
     return data.invitations.find((inv) => {
       if (inv.slug === slug) return true;
@@ -225,7 +208,4 @@ export function AppProvider({ children }) {
   );
 }
 
-// ============================================
-// 6. EXPORT DEFAULT
-// ============================================
 export default AppContext;
