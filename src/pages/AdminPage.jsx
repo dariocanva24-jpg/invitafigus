@@ -1,164 +1,150 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { LogOut, Plus, Eye, Trash2, Users, Calendar, CheckCircle } from 'lucide-react'
+
+const ADMIN_PASSWORD = 'invitafigus2026'
 
 export default function AdminPage() {
   const navigate = useNavigate()
-  const { events } = useApp()
-  const [auth, setAuth] = useState({ username: '', password: '', isLoggedIn: false })
+  const { invitations, activateInvitation } = useApp()
+  const [password, setPassword] = useState('')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [error, setError] = useState('')
 
   const handleLogin = (e) => {
     e.preventDefault()
-    if (auth.username === 'admin' && auth.password === 'figus2026') {
-      setAuth(p => ({ ...p, isLoggedIn: true }))
+    if (password === ADMIN_PASSWORD) {
+      setIsLoggedIn(true)
+      setError('')
+    } else {
+      setError('Contraseña incorrecta')
     }
   }
 
-  if (!auth.isLoggedIn) {
+  const handleActivate = (id) => {
+    activateInvitation(id)
+  }
+
+  const copyLink = (slug) => {
+    const url = `${window.location.origin}/invitacion/${slug}`
+    navigator.clipboard.writeText(url)
+    alert('Link copiado: ' + url)
+  }
+
+  if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-figus-dark">
-        <div className="absolute inset-0 bg-figus-hero" />
-        <div className="relative z-10 w-full max-w-md px-4">
+      <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: 'linear-gradient(135deg, rgba(255,107,53,0.3), rgba(236,72,153,0.3))', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <span className="text-4xl">🏆</span>
-            </div>
-            <h1 className="text-4xl font-black text-white font-bebas tracking-wider">INVITFIGUS</h1>
-            <p className="text-white/40 mt-2">Panel de Administración</p>
+            <h1 className="text-3xl font-black font-bebas text-[#FFD700] tracking-wider">INVITAFIGUS</h1>
+            <p className="text-white/40 text-sm mt-2">Panel de Administración</p>
           </div>
-
-          <div className="glass rounded-3xl p-8">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm text-white/70 mb-1">Usuario</label>
-                <input
-                  type="text"
-                  value={auth.username}
-                  onChange={(e) => setAuth(p => ({ ...p, username: e.target.value }))}
-                  className="w-full rounded-xl bg-white/5 border border-white/10 text-white px-4 py-3 focus:border-orange-500/50 outline-none"
-                  placeholder="admin"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-white/70 mb-1">Contraseña</label>
-                <input
-                  type="password"
-                  value={auth.password}
-                  onChange={(e) => setAuth(p => ({ ...p, password: e.target.value }))}
-                  className="w-full rounded-xl bg-white/5 border border-white/10 text-white px-4 py-3 focus:border-orange-500/50 outline-none"
-                  placeholder="••••••••"
-                />
-              </div>
-              <button type="submit" className="btn-pill-warm w-full py-3">
-                Ingresar al Panel
-              </button>
-            </form>
-          </div>
-
-          <p className="text-center text-sm text-white/30 mt-4">Demo: admin / figus2026</p>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-[#FFD700]/50 focus:outline-none transition-colors"
+            />
+            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-[#FFD700] text-[#0a0e27] font-bold hover:bg-[#e6c200] transition-colors"
+            >
+              Ingresar
+            </button>
+          </form>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full py-3 mt-4 text-white/40 text-sm hover:text-white/60 transition-colors"
+          >
+            Volver al inicio
+          </button>
         </div>
       </div>
     )
   }
 
-  const totalInvited = events.length * 30 // Estimado
-  const totalConfirmed = Math.floor(totalInvited * 0.7) // Estimado
-
   return (
-    <div className="min-h-screen bg-figus-dark">
-      <div className="absolute inset-0 bg-figus-hero" />
-
-      <div className="relative z-10 p-6 pt-24 max-w-6xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-[#0a0e27] text-white p-4">
+      <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-white font-bebas tracking-wider">PANEL ADMIN</h1>
-            <p className="text-white/40">Gestiona tus invitaciones</p>
+            <h1 className="text-2xl font-black font-bebas text-[#FFD700] tracking-wider">PANEL ADMIN</h1>
+            <p className="text-white/40 text-sm">Gestión de invitaciones</p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => navigate('/crear')} className="btn-pill-warm px-4 py-2 text-sm flex items-center gap-2">
-              <Plus size={16} /> Nueva Invitación
-            </button>
-            <button onClick={() => setAuth(p => ({ ...p, isLoggedIn: false }))} 
-              className="btn-pill-secondary px-4 py-2 text-sm flex items-center gap-2">
-              <LogOut size={16} /> Salir
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/')}
+            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
+          >
+            Volver al inicio
+          </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="glass rounded-2xl p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-white/40">Total Eventos</p>
-                <p className="text-3xl font-black text-white font-bebas">{events.length}</p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ background: 'rgba(59,130,246,0.2)' }}>
-                <Calendar size={24} className="text-blue-400" />
-              </div>
-            </div>
-          </div>
-          <div className="glass rounded-2xl p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-white/40">Invitados Est.</p>
-                <p className="text-3xl font-black text-white font-bebas">{totalInvited}</p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ background: 'rgba(168,85,247,0.2)' }}>
-                <Users size={24} className="text-purple-400" />
-              </div>
-            </div>
-          </div>
-          <div className="glass rounded-2xl p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-white/40">Confirmados Est.</p>
-                <p className="text-3xl font-black text-white font-bebas">{totalConfirmed}</p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ background: 'rgba(34,197,94,0.2)' }}>
-                <CheckCircle size={24} className="text-green-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Eventos */}
-        <div className="glass rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-white mb-4 font-bebas tracking-wider">MIS INVITACIONES</h2>
-
-          {events.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar size={48} className="text-white/10 mx-auto mb-4" />
-              <p className="text-white/30">No hay invitaciones creadas</p>
-            </div>
+        <div className="space-y-3">
+          {invitations.length === 0 ? (
+            <p className="text-white/40 text-center py-12">No hay invitaciones creadas</p>
           ) : (
-            <div className="space-y-3">
-              {events.map(event => (
-                <div key={event.id} className="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-colors"
-                  style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div className="flex items-center gap-4">
-                    <img src={event.honoreePhoto} alt={event.honoreeName} 
-                      className="w-12 h-12 rounded-xl object-cover" />
+            invitations.map((inv) => (
+              <div
+                key={inv.id}
+                className={`rounded-xl p-4 border ${
+                  inv.status === 'active'
+                    ? 'border-green-500/30 bg-green-500/5'
+                    : 'border-[#FFD700]/30 bg-[#FFD700]/5'
+                }`}
+              >
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    {inv.honoreePhoto && (
+                      <img
+                        src={inv.honoreePhoto}
+                        alt={inv.childName}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                    )}
                     <div>
-                      <p className="font-medium text-white">{event.honoreeName} - {event.honoreeAge} años</p>
-                      <p className="text-sm text-white/40">{event.date} · {event.team}</p>
+                      <p className="font-bold text-white">
+                        {inv.childName} {inv.honoreeName || ''}
+                        {inv.nickname && ` "${inv.nickname}"`}
+                      </p>
+                      <p className="text-white/40 text-sm">
+                        {inv.honoreeAge || inv.age} años · {inv.team} · {inv.date}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                            inv.status === 'active'
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-[#FFD700]/20 text-[#FFD700]'
+                          }`}
+                        >
+                          {inv.status === 'active' ? 'ACTIVA' : 'PENDIENTE'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => window.open(`/invitacion/${event.slug}`, '_blank')}
-                      className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white">
-                      <Eye size={18} />
-                    </button>
-                    <button className="p-2 hover:bg-red-500/20 rounded-xl transition-colors text-red-400">
-                      <Trash2 size={18} />
+
+                  <div className="flex items-center gap-2">
+                    {inv.status !== 'active' && (
+                      <button
+                        onClick={() => handleActivate(inv.id)}
+                        className="px-4 py-2 rounded-lg bg-[#FFD700] text-[#0a0e27] font-bold text-sm hover:bg-[#e6c200] transition-colors"
+                      >
+                        Activar
+                      </button>
+                    )}
+                    <button
+                      onClick={() => copyLink(inv.slug)}
+                      className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
+                    >
+                      Copiar link
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
       </div>
