@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Camera, Shield, Check, X, Star, Calendar, Clock, MapPin, Phone, Mail } from 'lucide-react'
+import { ChevronLeft, Camera, Check, X, Star, Calendar, Clock, MapPin } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import PlayerCard from '../components/invitation/PlayerCard'
 import Watermark from '../components/invitation/Watermark'
 import { sendToGoogleForm } from '../services/googleForm'
+
 const WHATSAPP_NUMBER = '5493885212331'
 
 const TEAMS = [
@@ -29,6 +30,7 @@ export default function CreatePage() {
   const fileInputRef = useRef(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [createdInvitation, setCreatedInvitation] = useState(null)
+  const [paymentStatus, setPaymentStatus] = useState('idle')
 
   const [formData, setFormData] = useState({
     childName: '',
@@ -145,11 +147,7 @@ export default function CreatePage() {
   const handleActivate = () => {
     window.open('https://mpago.la/1X2RD5k', '_blank')
     setShowPaymentModal(false)
-    setTimeout(() => {
-      alert('¡Gracias! 🎉\n\nEnvianos el comprobante por WhatsApp y te activamos tu invitación en minutos.\n\nTe redirigimos a WhatsApp...')
-      const mensaje = `Hola! Acabo de pagar la invitación de ${formData.childName}. ¿Podés activarla?`
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`, '_blank')
-    }, 500)
+    setPaymentStatus('pending')
   }
 
   const handleSeeLater = () => {
@@ -167,8 +165,6 @@ export default function CreatePage() {
     setFormData({ ...formData, [field]: value })
     if (errors[field]) setErrors({ ...errors, [field]: null })
   }
-
-  const teamData = TEAMS.find(t => t.id === formData.team) || TEAMS[0]
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-montserrat">
@@ -395,8 +391,33 @@ export default function CreatePage() {
                 </div>
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="pt-4">
-                <button onClick={() => setShowPaymentModal(true)} className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#0a0e27] font-bold text-lg tracking-wide hover:opacity-90 transition-all shadow-lg shadow-[#FFD700]/20">Activar mi invitación · ARS $10.000</button>
-                <button onClick={handleSeeLater} className="w-full py-3 mt-3 text-white/40 text-sm hover:text-white/60 transition-colors">Ver más tarde</button>
+                {paymentStatus === 'idle' && (
+                  <>
+                    <button onClick={() => setShowPaymentModal(true)} className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#0a0e27] font-bold text-lg tracking-wide hover:opacity-90 transition-all shadow-lg shadow-[#FFD700]/20">
+                      Activar mi invitación · ARS $10.000
+                    </button>
+                    <button onClick={handleSeeLater} className="w-full py-3 mt-3 text-white/40 text-sm hover:text-white/60 transition-colors">
+                      Ver más tarde
+                    </button>
+                  </>
+                )}
+                {paymentStatus === 'pending' && (
+                  <div className="text-center p-4 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/30">
+                    <p className="text-[#FFD700] font-bold mb-2">⏳ Esperando confirmación de pago</p>
+                    <p className="text-white/60 text-sm mb-4">
+                      Una vez que pagues, envianos el comprobante por WhatsApp para activar tu invitación.
+                    </p>
+                    <button 
+                      onClick={() => {
+                        const mensaje = `Hola! Acabo de pagar la invitación de ${formData.childName}. ¿Podés activarla?`
+                        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensaje)}`, '_blank')
+                      }}
+                      className="w-full py-3 rounded-xl bg-[#22c55e] text-white font-bold hover:bg-[#16a34a] transition-all"
+                    >
+                      📱 Enviar comprobante por WhatsApp
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}
