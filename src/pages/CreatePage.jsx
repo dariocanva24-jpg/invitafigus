@@ -47,6 +47,7 @@ export default function CreatePage() {
     email: '',
     honoreePhoto: '',
     message: '',
+    dressCode: '',
   })
 
   const [errors, setErrors] = useState({})
@@ -148,17 +149,6 @@ export default function CreatePage() {
     window.open('https://mpago.la/1X2RD5k', '_blank')
     setShowPaymentModal(false)
     setPaymentStatus('pending')
-  }
-
-  const handleSeeLater = () => {
-    if (createdInvitation) {
-      const savedSlugs = JSON.parse(localStorage.getItem('invitafigus_saved_slugs') || '[]')
-      if (!savedSlugs.includes(createdInvitation.slug)) {
-        savedSlugs.unshift(createdInvitation.slug)
-        localStorage.setItem('invitafigus_saved_slugs', JSON.stringify(savedSlugs.slice(0, 10)))
-      }
-      navigate(`/invitacion/${createdInvitation.slug}`)
-    }
   }
 
   const updateField = (field, value) => {
@@ -326,6 +316,10 @@ export default function CreatePage() {
                     <input type="tel" value={formData.contactWhatsApp} onChange={(e) => updateField('contactWhatsApp', e.target.value.replace(/\D/g, ''))} placeholder="9 11 1234 5678" className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-[#FFD700]/50 focus:outline-none transition-colors" />
                   </div>
                 </div>
+                <div>
+                  <label className="text-white/60 text-sm mb-2 block">Vestimenta / Pilcha <span className="text-white/30">(opcional)</span></label>
+                  <input type="text" value={formData.dressCode} onChange={(e) => updateField('dressCode', e.target.value)} placeholder="Casual, de sport, de gala..." className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-[#FFD700]/50 focus:outline-none transition-colors" />
+                </div>
               </div>
             </motion.div>
           )}
@@ -396,9 +390,9 @@ export default function CreatePage() {
                     <button onClick={() => setShowPaymentModal(true)} className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#0a0e27] font-bold text-lg tracking-wide hover:opacity-90 transition-all shadow-lg shadow-[#FFD700]/20">
                       Activar mi invitación · ARS $10.000
                     </button>
-                    <button onClick={handleSeeLater} className="w-full py-3 mt-3 text-white/40 text-sm hover:text-white/60 transition-colors">
-                      Ver más tarde
-                    </button>
+                    <p className="text-center text-white/30 text-xs mt-3">
+                      La preview tiene marca de agua. Pagá para recibir la versión HD sin marca.
+                    </p>
                   </>
                 )}
                 {paymentStatus === 'pending' && (

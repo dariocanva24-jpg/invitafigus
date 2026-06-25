@@ -22,12 +22,9 @@ export default function EventInfo({ event }) {
     return parts[0] + ':' + parts[1] + ' hs'
   }
 
-  // Extraer coordenadas o crear URL de búsqueda
   const getMapEmbedUrl = () => {
     if (!event?.mapsUrl) return null
-    // Si es una URL de Google Maps normal, la convertimos a embed
     if (event.mapsUrl.includes('google.com/maps')) {
-      // Intentar extraer coordenadas o usar la URL como query
       const query = encodeURIComponent(event.address || event.location || 'Argentina')
       return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3284.0168878895!2d-58.383759!3d-34.603734!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDM2JzEzLjQiUyA1OMKwMjMnMDEuNSJX!5e0!3m2!1ses!2sar!4v1!5m2!1ses!2sar`
     }
@@ -49,14 +46,17 @@ export default function EventInfo({ event }) {
       sub: event.address?.split(',').slice(1).join(',') || '',
       color: 'orange',
     },
-    {
+  ]
+
+  if (event.dressCode && event.dressCode.trim() !== '') {
+    infoItems.push({
       icon: <Shirt size={22} className="text-purple-400" style={{ filter: 'drop-shadow(0 0 5px rgba(168,85,247,0.5))' }} />,
-      label: 'DRESS CODE',
-      value: event.dressCode || 'Casual',
+      label: 'VESTIMENTA / PILCHA',
+      value: event.dressCode,
       sub: '',
       color: 'purple',
-    },
-  ]
+    })
+  }
 
   const colorStyles = {
     cyan: { bg: 'rgba(0,212,255,0.1)', border: 'rgba(0,212,255,0.3)', text: '#00D4FF' },
@@ -113,7 +113,6 @@ export default function EventInfo({ event }) {
         )
       })}
       
-      {/* ========== MAPA EMBEBIDO ========== */}
       {mapEmbedUrl && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -135,7 +134,6 @@ export default function EventInfo({ event }) {
         </motion.div>
       )}
       
-      {/* Botón para abrir mapa en nueva pestaña */}
       <motion.a
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}

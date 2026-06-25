@@ -14,6 +14,7 @@ const InvitationPage = () => {
   const navigate = useNavigate();
   const { getEventBySlug, activateInvitation, setCurrentInvitation } = useApp();
   const event = getEventBySlug(slug);
+  const isActive = event?.status === 'active';
 
   const [showCard, setShowCard] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -38,35 +39,34 @@ const InvitationPage = () => {
     setShowCard(true);
   };
 
-  if (!event) {
+  if (!isActive) {
     return (
       <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center"
+          className="text-center max-w-sm"
         >
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#1a1f3a] flex items-center justify-center">
-            <span className="text-3xl">⚽</span>
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FFD700]/10 flex items-center justify-center">
+            <span className="text-3xl">🔒</span>
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">
-            Invitación no encontrada
+            Invitación pendiente de activación
           </h2>
           <p className="text-gray-400 mb-6">
-            La invitación que buscás no existe o fue eliminada.
+            Esta invitación aún no fue activada. El organizador debe confirmar el pago para habilitarla.
           </p>
-          <a
-            href="/"
-            className="inline-block px-6 py-3 bg-[#FFD700] text-[#0a0e27] font-bold rounded-lg hover:bg-[#e6c200] transition-colors"
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-3 bg-[#FFD700] text-[#0a0e27] font-bold rounded-lg hover:bg-[#e6c200] transition-colors"
           >
             Volver al inicio
-          </a>
+          </button>
         </motion.div>
       </div>
     );
   }
 
-  // ========== Activar la invitación antes de abrir MercadoPago ==========
   const handleActivateNow = () => {
     if (event?.id) {
       activateInvitation(event.id);
@@ -82,7 +82,6 @@ const InvitationPage = () => {
     setShowPaymentModal(false);
   };
 
-  // ========== CORRECCIÓN: Navegar a /crear limpiando estado de edición ==========
   const handleNavigateToCreate = () => {
     setCurrentInvitation(null);
     navigate('/crear');
