@@ -16,51 +16,35 @@ const ENTRIES = {
 };
 
 export function sendToGoogleForm(data) {
-
   return new Promise((resolve) => {
+    const formData = new URLSearchParams();
+    
+    formData.append(ENTRIES.nombre, data.nombre || '');
+    formData.append(ENTRIES.edad, data.edad || '');
+    formData.append(ENTRIES.equipo, data.equipo || '');
+    formData.append(ENTRIES.fecha, data.fecha || '');
+    formData.append(ENTRIES.hora, data.hora || '');
+    formData.append(ENTRIES.lugar, data.lugar || '');
+    formData.append(ENTRIES.lugar2, data.lugar || '');
+    formData.append(ENTRIES.contacto, data.contacto || '');
+    formData.append(ENTRIES.telefono, data.telefono || '');
+    formData.append(ENTRIES.email, data.email || '');
+    formData.append('fvv', '1');
+    formData.append('draftResponse', '[]');
+    formData.append('pageHistory', '0');
 
-    const iframe = document.createElement('iframe');
-    iframe.name = 'googleFormIframe';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    const form = document.createElement('form');
-    form.action = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
-    form.method = 'POST';
-    form.target = 'googleFormIframe';
-
-    const addField = (name, value) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = name;
-      input.value = value || '';
-      form.appendChild(input);
-    };
-
-    addField(ENTRIES.nombre, data.nombre);
-    addField(ENTRIES.edad, data.edad);
-    addField(ENTRIES.equipo, data.equipo);
-    addField(ENTRIES.fecha, data.fecha);
-    addField(ENTRIES.hora, data.hora);
-    addField(ENTRIES.lugar, data.lugar);
-    addField(ENTRIES.lugar2, data.lugar);
-    addField(ENTRIES.contacto, data.contacto);
-    addField(ENTRIES.telefono, data.telefono);
-    addField(ENTRIES.email, data.email);
-
-    addField('fvv', '1');
-    addField('draftResponse', '[]');
-    addField('pageHistory', '0');
-
-    document.body.appendChild(form);
-    form.submit();
+    fetch(`https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString(),
+    }).catch(() => {
+      // no-cors no devuelve respuesta, ignoramos el error
+    });
 
     console.log('✅ Formulario enviado');
-
-    setTimeout(() => {
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
-      resolve(true);
-    }, 3000);
+    resolve(true);
   });
 }
