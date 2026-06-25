@@ -1,6 +1,6 @@
 // services/googleForm.js
 
-const FORM_ID = '1GN3ADCmswrabdqLekeLk1d-ABgZKdguLI5Yem3i6pf8';
+const FORM_ID = '1FAIpQLSc4tpPB8fAIYa0Aild2haLWU_Hjhs19pc3DkEDIO7ChP18BWg';
 
 const ENTRIES = {
   nombre: 'entry.226322802',
