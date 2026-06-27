@@ -2,7 +2,7 @@
 // INVITAFIGUS - CLIENTE API PARA GOOGLE SHEETS
 // ============================================
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEYDyS7rEW_GVnTlsNPamRo8l0xaeNYMo6V-jmBV-wrYy_uJq4V0-9PDBLu7Y_XtUlcA/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnNN9MODj8ahb_tKXr1aBi7O2tq0g0fZhJaXfRdvuGn-un8-6Li-zz8DjlBfr6f8LNUA/exec';
 
 export async function fetchAllInvitations() {
   try {
@@ -38,7 +38,7 @@ export async function fetchInvitationBySlug(slug) {
   }
 }
 
-export async function activateInvitationRemote(slug) {
+export async function activateInvitationRemote(rowIndex) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=updateStatus`, {
       method: 'POST',
@@ -46,8 +46,8 @@ export async function activateInvitationRemote(slug) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        slug,
-        status: 'ACTIVA',
+        rowIndex,         // ← rowIndex en lugar de slug
+        estado: 'ACTIVA'  // ← estado en lugar de status
       }),
     });
     
@@ -64,7 +64,7 @@ export async function activateInvitationRemote(slug) {
   }
 }
 
-export async function deleteInvitationRemote(slug) {
+export async function deleteInvitationRemote(rowIndex) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=deleteRow`, {
       method: 'POST',
@@ -72,7 +72,7 @@ export async function deleteInvitationRemote(slug) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        slug,
+        rowIndex,
       }),
     });
     

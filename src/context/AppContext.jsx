@@ -188,9 +188,9 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  const activateInvitation = useCallback(async (slug) => {
+  const activateInvitation = useCallback(async (rowIndex) => {
     try {
-      await activateInvitationRemote(slug);
+      await activateInvitationRemote(rowIndex);
       return true;
     } catch (err) {
       console.error('Error activating invitation:', err);
@@ -198,9 +198,9 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  const deleteInvitation = useCallback(async (slug) => {
+  const deleteInvitation = useCallback(async (rowIndex) => {
     try {
-      await deleteInvitationRemote(slug);
+      await deleteInvitationRemote(rowIndex);
       return true;
     } catch (err) {
       console.error('Error deleting invitation:', err);
@@ -208,9 +208,9 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  const updateField = useCallback(async (slug, field, value) => {
+  const updateField = useCallback(async (rowIndex, field, value) => {
     try {
-      await updateInvitationField(slug, field, value);
+      await updateInvitationField(rowIndex, field, value);
       return true;
     } catch (err) {
       console.error('Error updating field:', err);
