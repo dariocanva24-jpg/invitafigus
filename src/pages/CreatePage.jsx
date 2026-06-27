@@ -108,41 +108,46 @@ export default function CreatePage() {
   }
 
   const handlePreview = async () => {
-    setIsLoading(true)
-    try {
-      await sendToGoogleForm({
-        nombre: formData.childName,
-        edad: formData.honoreeAge,
-        equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
-        fecha: formData.date,
-        hora: `${formData.startTime} - ${formData.endTime}`,
-        lugar: formData.location || formData.address,
-        contacto: `${formData.honoreeName || formData.childName} (padre/madre)`,
-        telefono: formData.contactWhatsApp,
-        email: formData.email
-      })
-    } catch (error) {
-      console.error('Error sendToGoogleForm:', error)
-    }
-
-    setTimeout(() => {
-      try {
-        const invitation = createInvitation({
-          ...formData,
-          honoreeAge: parseInt(formData.honoreeAge),
-          time: `${formData.startTime} - ${formData.endTime}`,
-          slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
-          status: 'preview',
-        })
-        setCreatedInvitation(invitation)
-        setStep(6)
-        setIsLoading(false)
-      } catch (error) {
-        console.error('Error en createInvitation:', error)
-        setIsLoading(false)
-      }
-    }, 2500)
+  setIsLoading(true)
+  try {
+    await sendToGoogleForm({
+      nombre: formData.childName,
+      apellido: formData.honoreeName,
+      apodo: formData.nickname,
+      edad: formData.honoreeAge,
+      equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
+      fecha: formData.date,
+      hora: `${formData.startTime} - ${formData.endTime}`,
+      lugar: formData.location || formData.address,
+      lugar2: formData.location || formData.address,
+      contacto: `${formData.honoreeName || formData.childName} (padre/madre)`,
+      telefono: formData.contactWhatsApp,
+      email: formData.email,
+      mensaje: formData.message,
+      vestimenta: formData.dressCode
+    })
+  } catch (error) {
+    console.error('Error sendToGoogleForm:', error)
   }
+
+  setTimeout(() => {
+    try {
+      const invitation = createInvitation({
+        ...formData,
+        honoreeAge: parseInt(formData.honoreeAge),
+        time: `${formData.startTime} - ${formData.endTime}`,
+        slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
+        status: 'preview',
+      })
+      setCreatedInvitation(invitation)
+      setStep(6)
+      setIsLoading(false)
+    } catch (error) {
+      console.error('Error en createInvitation:', error)
+      setIsLoading(false)
+    }
+  }, 2500)
+}
 
   const handleActivate = () => {
     window.open('https://mpago.la/1X2RD5k', '_blank')

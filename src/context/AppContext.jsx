@@ -1,4 +1,12 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import {
+  fetchAllInvitations,
+  fetchInvitationBySlug,
+  activateInvitationRemote,
+  deleteInvitationRemote,
+  updateInvitationField,
+  incrementViewsRemote,
+} from '../services/googleSheetsApi';
 
 const AppContext = createContext(null);
 
@@ -69,6 +77,12 @@ function saveToStorage(data) {
 export function AppProvider({ children }) {
   const [data, setData] = useState(loadFromStorage);
   const [currentInvitation, setCurrentInvitation] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // ============================================
+  // FUNCIONES LOCALES (localStorage - solo para preview/caché)
+  // ============================================
 
   const createInvitation = useCallback((invitationData) => {
     const newInvitation = {
@@ -132,46 +146,6 @@ export function AppProvider({ children }) {
     saveToStorage(updated);
   }, [data]);
 
-  const incrementViews = useCallback((invitationId) => {
-    const updated = {
-      ...data,
-      invitations: data.invitations.map((inv) => {
-        if (inv.id === invitationId) {
-          return { ...inv, views: (inv.views || 0) + 1 };
-        }
-        return inv;
-      }),
-    };
-
-    setData(updated);
-    saveToStorage(updated);
-  }, [data]);
-
-  const deleteInvitation = useCallback((id) => {
-    const updated = {
-      ...data,
-      invitations: data.invitations.filter((inv) => inv.id !== id),
-    };
-
-    setData(updated);
-    saveToStorage(updated);
-  }, [data]);
-
-  const activateInvitation = useCallback((id) => {
-    const updated = {
-      ...data,
-      invitations: data.invitations.map((inv) => {
-        if (inv.id === id) {
-          return { ...inv, status: 'active' };
-        }
-        return inv;
-      }),
-    };
-
-    setData(updated);
-    saveToStorage(updated);
-  }, [data]);
-
   const shareWhatsApp = useCallback((invitation) => {
     const slug = invitation.slug || invitation.id;
     const url = `${window.location.origin}/invitacion/${slug}`;
@@ -186,19 +160,97 @@ export function AppProvider({ children }) {
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
   }, []);
 
+  // ============================================
+  // FUNCIONES REMOTAS (Google Sheets - fuente de verdad)
+  // ============================================
+
+  const fetchInvitations = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const invitations = await fetchAllInvitations();
+      setIsLoading(false);
+      return invitations;
+    } catch (err) {
+      setIsLoading(false);
+      setError(err.message);
+      throw err;
+    }
+  }, []);
+
+  const fetchInvitationRemote = useCallback(async (slug) => {
+    try {
+      const invitation = await fetchInvitationBySlug(slug);
+      return invitation;
+    } catch (err) {
+      console.error('Error fetching invitation:', err);
+      return null;
+    }
+  }, []);
+
+  const activateInvitation = useCallback(async (slug) => {
+    try {
+      await activateInvitationRemote(slug);
+      return true;
+    } catch (err) {
+      console.error('Error activating invitation:', err);
+      throw err;
+    }
+  }, []);
+
+  const deleteInvitation = useCallback(async (slug) => {
+    try {
+      await deleteInvitationRemote(slug);
+      return true;
+    } catch (err) {
+      console.error('Error deleting invitation:', err);
+      throw err;
+    }
+  }, []);
+
+  const updateField = useCallback(async (slug, field, value) => {
+    try {
+      await updateInvitationField(slug, field, value);
+      return true;
+    } catch (err) {
+      console.error('Error updating field:', err);
+      throw err;
+    }
+  }, []);
+
+  const incrementViews = useCallback(async (slug) => {
+    try {
+      const newViews = await incrementViewsRemote(slug);
+      return newViews;
+    } catch (err) {
+      console.error('Error incrementing views:', err);
+      return null;
+    }
+  }, []);
+
   const value = {
+    // Estado
     invitations: data.invitations,
     currentInvitation,
     setCurrentInvitation,
+    isLoading,
+    error,
+    
+    // Funciones locales (localStorage - preview/caché)
     createInvitation,
     getInvitation,
     getInvitationBySlug,
     getEventBySlug,
     addRSVP,
-    incrementViews,
-    deleteInvitation,
-    activateInvitation,
     shareWhatsApp,
+    
+    // Funciones remotas (Google Sheets - fuente de verdad)
+    fetchInvitations,
+    fetchInvitationRemote,
+    activateInvitation,
+    deleteInvitation,
+    updateField,
+    incrementViews,
   };
 
   return (

@@ -1,156 +1,274 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import { useApp } from "../context/AppContext";
+import { fetchInvitationBySlug, incrementViewsRemote } from "../services/googleSheetsApi";
+import AlbumCover from "../components/invitation/AlbumCover";
+import PlayerCard from "../components/invitation/PlayerCard";
+import EventInfo from "../components/invitation/EventInfo";
+import CountdownTimer from "../components/invitation/CountdownTimer";
+import RSVPForm from "../components/invitation/RSVPForm";
+import ShareButtons from "../components/invitation/ShareButtons";
 
-const ADMIN_PASSWORD = 'invitafigus2026'
+const WHATSAPP_NUMBER = '5493885212331';
 
-export default function AdminPage() {
-  const navigate = useNavigate()
-  const { invitations, activateInvitation } = useApp()
-  const [password, setPassword] = useState('')
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [error, setError] = useState('')
+const InvitationPage = () => {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const { getEventBySlug, setCurrentInvitation } = useApp();
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleLogin = (e) => {
-    e.preventDefault()
-    if (password === ADMIN_PASSWORD) {
-      setIsLoggedIn(true)
-      setError('')
-    } else {
-      setError('Contraseña incorrecta')
-    }
+  const [showCard, setShowCard] = useState(false);
+  const [albumOpened, setAlbumOpened] = useState(false);
+
+  // Cargar invitación desde Google Sheets
+  useEffect(() => {
+    const loadInvitation = async () => {
+      setLoading(true);
+      try {
+        // Primero intentamos desde Google Sheets (fuente de verdad)
+        const remoteEvent = await fetchInvitationBySlug(slug);
+        
+        if (remoteEvent) {
+          // Buscar foto en localStorage (fallback si no está en Sheets)
+          const localData = JSON.parse(localStorage.getItem('invitafigus_data') || '{}');
+          const localInv = localData.invitations?.find(inv => inv.slug === slug);
+          
+          // Mapear datos de Sheets al formato del frontend
+          const mappedEvent = {
+            id: `inv-${remoteEvent.slug}`,
+            slug: remoteEvent.slug,
+            childName: remoteEvent.nombre,
+            honoreeName: remoteEvent.apellido,
+            nickname: remoteEvent.apodo,
+            age: remoteEvent.edad,
+            honoreeAge: remoteEvent.edad,
+            team: remoteEvent.equipo?.toLowerCase().replace(/\s+/g, '-') || 'argentina',
+            date: remoteEvent.fecha,
+            time: remoteEvent.hora,
+            address: remoteEvent.lugar,
+            location: remoteEvent.lugar,
+            dressCode: remoteEvent.vestimenta,
+            mapsUrl: remoteEvent.maps_url,
+            contactWhatsApp: remoteEvent.telefono,
+            honoreePhoto: remoteEvent.foto_url || localInv?.honoreePhoto || '',
+            message: remoteEvent.mensaje,
+            status: remoteEvent.estado?.toLowerCase(),
+            views: remoteEvent.views,
+          };
+          setEvent(mappedEvent);
+          
+          // Incrementar views en Sheets (silencioso, no bloquea)
+          incrementViewsRemote(slug).catch(() => {});
+        } else {
+          // Fallback: buscar en localStorage (demo/preview)
+          const localEvent = getEventBySlug(slug);
+          setEvent(localEvent);
+        }
+      } catch (err) {
+        console.error('Error loading invitation:', err);
+        // Fallback a localStorage
+        const localEvent = getEventBySlug(slug);
+        setEvent(localEvent);
+        if (!localEvent) {
+          setError('Invitación no encontrada');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInvitation();
+  }, [slug, getEventBySlug]);
+
+  const handleAlbumOpen = () => {
+    setAlbumOpened(true);
+    setShowCard(true);
+  };
+
+  const handleNavigateToCreate = () => {
+    setCurrentInvitation(null);
+    navigate('/crear');
+  };
+
+  // ========== LOADING ==========
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white/40">Cargando invitación...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleActivate = (id) => {
-    activateInvitation(id)
-  }
-
-  const copyLink = (slug) => {
-    const url = `${window.location.origin}/invitacion/${slug}`
-    navigator.clipboard.writeText(url)
-    alert('Link copiado: ' + url)
-  }
-
-  if (!isLoggedIn) {
+  // ========== SI NO EXISTE LA INVITACIÓN: PANTALLA COMERCIAL ==========
+  if (!event) {
     return (
       <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-black font-bebas text-[#FFD700] tracking-wider">INVITAFIGUS</h1>
-            <p className="text-white/40 text-sm mt-2">Panel de Administración</p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-sm"
+        >
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FFD700]/10 flex items-center justify-center">
+            <span className="text-3xl">⚽</span>
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Contraseña"
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-[#FFD700]/50 focus:outline-none transition-colors"
-            />
-            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-[#FFD700] text-[#0a0e27] font-bold hover:bg-[#e6c200] transition-colors"
-            >
-              Ingresar
-            </button>
-          </form>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            ¡Creá tu invitación!
+          </h2>
+          <p className="text-gray-400 mb-6">
+            Esta invitación está en proceso o aún no fue creada. Convertí a tu hijo en la estrella del partido.
+          </p>
           <button
-            onClick={() => navigate('/')}
-            className="w-full py-3 mt-4 text-white/40 text-sm hover:text-white/60 transition-colors"
+            onClick={() => navigate('/crear')}
+            className="w-full px-6 py-3 bg-[#FFD700] text-[#0a0e27] font-bold rounded-lg hover:bg-[#e6c200] transition-colors mb-3"
           >
-            Volver al inicio
+            Crear mi invitación
           </button>
-        </div>
+          <button
+            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}
+            className="w-full px-6 py-3 bg-[#22c55e] text-white font-bold rounded-lg hover:bg-[#16a34a] transition-colors"
+          >
+            📱 Consultar por WhatsApp
+          </button>
+        </motion.div>
       </div>
-    )
+    );
   }
 
+  // ========== INVITACIÓN EXISTE ==========
   return (
-    <div className="min-h-screen bg-[#0a0e27] text-white p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-black font-bebas text-[#FFD700] tracking-wider">PANEL ADMIN</h1>
-            <p className="text-white/40 text-sm">Gestión de pedidos</p>
-          </div>
-          <button
-            onClick={() => navigate('/')}
-            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
-          >
-            Volver al inicio
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#0a0e27] relative overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#00D4FF]/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#FFD700]/5 rounded-full blur-3xl" />
+      </div>
 
-        <div className="space-y-3">
-          {invitations.length === 0 ? (
-            <p className="text-white/40 text-center py-12">No hay invitaciones creadas</p>
-          ) : (
-            invitations.map((inv) => (
-              <div
-                key={inv.id}
-                className={`rounded-xl p-4 border ${
-                  inv.status === 'active'
-                    ? 'border-green-500/30 bg-green-500/5'
-                    : 'border-[#FFD700]/30 bg-[#FFD700]/5'
-                }`}
-              >
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-3">
-                    {inv.honoreePhoto && (
-                      <img
-                        src={inv.honoreePhoto}
-                        alt={inv.childName}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    )}
-                    <div>
-                      <p className="font-bold text-white">
-                        {inv.childName} {inv.honoreeName || ''}
-                        {inv.nickname && ` "${inv.nickname}"`}
-                      </p>
-                      <p className="text-white/40 text-sm">
-                        {inv.honoreeAge || inv.age} años · {inv.team} · {inv.date}
-                      </p>
-                      <p className="text-white/40 text-xs mt-1">
-                        📱 {inv.contactWhatsApp || 'Sin tel'} · ✉️ {inv.email || 'Sin email'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                            inv.status === 'active'
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-[#FFD700]/20 text-[#FFD700]'
-                          }`}
-                        >
-                          {inv.status === 'active' ? 'ACTIVA' : 'PENDIENTE'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+      <div className="relative z-20 max-w-md mx-auto px-4 pt-4">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm"
+        >
+          <ArrowLeft size={16} />
+          Volver al inicio
+        </button>
+      </div>
 
-                  <div className="flex items-center gap-2">
-                    {inv.status !== 'active' && (
-                      <button
-                        onClick={() => handleActivate(inv.id)}
-                        className="px-4 py-2 rounded-lg bg-[#FFD700] text-[#0a0e27] font-bold text-sm hover:bg-[#e6c200] transition-colors"
-                      >
-                        Activar
-                      </button>
-                    )}
-                    <button
-                      onClick={() => copyLink(inv.slug)}
-                      className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
-                    >
-                      Copiar link
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+      <div className="relative z-10 max-w-md mx-auto px-4 py-4 pb-24">
+        <AnimatePresence>
+          {!albumOpened && (
+            <motion.div
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, height: 0, transition: { duration: 0.5 } }}
+              className="mb-6"
+            >
+              <AlbumCover 
+                honoreeName={event.honoreeName || event.childName} 
+                team={event.team} 
+                onOpen={handleAlbumOpen}
+              />
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCard && (
+            <motion.div
+              initial={{ opacity: 0, y: 40, rotateX: -15 }}
+              animate={{ opacity: 1, y: 0, rotateX: 0 }}
+              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="mb-6"
+            >
+              <PlayerCard event={event} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCard && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="mb-6"
+            >
+              <EventInfo event={event} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCard && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="mb-6"
+            >
+              <CountdownTimer date={event.date} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCard && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+              className="mb-6"
+            >
+              <RSVPForm event={event} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCard && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.9 }}
+              className="mb-6"
+            >
+              <ShareButtons event={event} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCard && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.1 }}
+              className="pt-4 pb-8"
+            >
+              <div className="h-px w-full bg-white/10 mb-6" />
+              <div className="text-center space-y-4">
+                <p className="text-white/40 text-sm">
+                  ¿Te gustó? Creá la tuya
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleNavigateToCreate}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#ec4899] text-white font-bold text-base tracking-wide hover:opacity-90 transition-all shadow-lg shadow-[#FF6B35]/20"
+                >
+                  Volver y crear la mía →
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default InvitationPage;

@@ -1,15 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { fetchAllInvitations, activateInvitationRemote, deleteInvitationRemote, updateInvitationField } from '../services/googleSheetsApi'
 
 const ADMIN_PASSWORD = 'invitafigus2026'
 
 export default function AdminPage() {
   const navigate = useNavigate()
-  const { invitations, activateInvitation } = useApp()
+  const { shareWhatsApp } = useApp()
   const [password, setPassword] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [error, setError] = useState('')
+  const [invitations, setInvitations] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [editingSlug, setEditingSlug] = useState(null)
+  const [editForm, setEditForm] = useState({})
+
+  // Cargar invitaciones desde Google Sheets
+  const loadInvitations = async () => {
+    setLoading(true)
+    try {
+      const data = await fetchAllInvitations()
+      setInvitations(data)
+      setError('')
+    } catch (err) {
+      setError('Error al cargar invitaciones: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadInvitations()
+    }
+  }, [isLoggedIn])
 
   const handleLogin = (e) => {
     e.preventDefault()
@@ -21,14 +46,65 @@ export default function AdminPage() {
     }
   }
 
-  const handleActivate = (id) => {
-    activateInvitation(id)
+  const handleActivate = async (slug) => {
+    try {
+      await activateInvitationRemote(slug)
+      await loadInvitations() // Recargar para ver el cambio
+    } catch (err) {
+      setError('Error al activar: ' + err.message)
+    }
+  }
+
+  const handleDelete = async (slug) => {
+    if (!window.confirm('¿Eliminar esta invitación?')) return
+    try {
+      await deleteInvitationRemote(slug)
+      await loadInvitations()
+    } catch (err) {
+      setError('Error al eliminar: ' + err.message)
+    }
+  }
+
+  const handleEdit = (inv) => {
+    setEditingSlug(inv.slug)
+    setEditForm({
+      fecha: inv.fecha || '',
+      hora: inv.hora || '',
+      lugar: inv.lugar || '',
+      mensaje: inv.mensaje || '',
+      equipo: inv.equipo || '',
+      estado: inv.estado || 'PENDIENTE',
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    try {
+      const promises = Object.entries(editForm).map(([field, value]) => 
+        updateInvitationField(editingSlug, field, value)
+      )
+      await Promise.all(promises)
+      setEditingSlug(null)
+      await loadInvitations()
+    } catch (err) {
+      setError('Error al guardar: ' + err.message)
+    }
   }
 
   const copyLink = (slug) => {
     const url = `${window.location.origin}/invitacion/${slug}`
     navigator.clipboard.writeText(url)
     alert('Link copiado: ' + url)
+  }
+
+  const openWhatsApp = (inv) => {
+    const url = `${window.location.origin}/invitacion/${inv.slug}`
+    const text = `¡Hola! Tu invitación de InvitaFigus está lista 🎉\n\n` +
+      `👤 ${inv.nombre} ${inv.apellido || ''}\n` +
+      `⚽ ${inv.edad} años · ${inv.equipo}\n` +
+      `📅 ${inv.fecha}\n\n` +
+      `👉 Link: ${url}\n\n` +
+      `¡Compartila con tus invitados!`
+    window.open(`https://wa.me/${inv.telefono}?text=${encodeURIComponent(text)}`, '_blank')
   }
 
   if (!isLoggedIn) {
@@ -68,85 +144,231 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0e27] text-white p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-black font-bebas text-[#FFD700] tracking-wider">PANEL ADMIN</h1>
-            <p className="text-white/40 text-sm">Gestión de invitaciones</p>
+            <p className="text-white/40 text-sm">CRM - Gestión de invitaciones</p>
           </div>
-          <button
-            onClick={() => navigate('/')}
-            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
-          >
-            Volver al inicio
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={loadInvitations}
+              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
+            >
+              🔄 Actualizar
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
+            >
+              Volver al inicio
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {invitations.length === 0 ? (
-            <p className="text-white/40 text-center py-12">No hay invitaciones creadas</p>
-          ) : (
-            invitations.map((inv) => (
+        {error && (
+          <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="w-8 h-8 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-white/40">Cargando invitaciones...</p>
+          </div>
+        ) : invitations.length === 0 ? (
+          <p className="text-white/40 text-center py-12">No hay invitaciones en Google Sheets</p>
+        ) : (
+          <div className="space-y-3">
+            {invitations.map((inv) => (
               <div
-                key={inv.id}
+                key={inv.slug}
                 className={`rounded-xl p-4 border ${
-                  inv.status === 'active'
+                  inv.estado === 'ACTIVA'
                     ? 'border-green-500/30 bg-green-500/5'
+                    : inv.estado === 'ELIMINADA'
+                    ? 'border-red-500/30 bg-red-500/5 opacity-50'
                     : 'border-[#FFD700]/30 bg-[#FFD700]/5'
                 }`}
               >
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-3">
-                    {inv.honoreePhoto && (
+                <div className="flex items-start justify-between flex-wrap gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-[200px]">
+                    {inv.foto_url ? (
                       <img
-                        src={inv.honoreePhoto}
-                        alt={inv.childName}
+                        src={inv.foto_url}
+                        alt={inv.nombre}
                         className="w-12 h-12 rounded-lg object-cover"
                       />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-xl">
+                        ⚽
+                      </div>
                     )}
-                    <div>
+                    <div className="flex-1">
                       <p className="font-bold text-white">
-                        {inv.childName} {inv.honoreeName || ''}
-                        {inv.nickname && ` "${inv.nickname}"`}
+                        {inv.nombre} {inv.apellido || ''}
+                        {inv.apodo && ` "${inv.apodo}"`}
                       </p>
                       <p className="text-white/40 text-sm">
-                        {inv.honoreeAge || inv.age} años · {inv.team} · {inv.date}
+                        {inv.edad} años · {inv.equipo} · {inv.fecha}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <p className="text-white/40 text-xs mt-1">
+                        📍 {inv.lugar || 'Sin lugar'} · 🕐 {inv.hora || 'Sin hora'}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                            inv.status === 'active'
+                            inv.estado === 'ACTIVA'
                               ? 'bg-green-500/20 text-green-400'
+                              : inv.estado === 'ELIMINADA'
+                              ? 'bg-red-500/20 text-red-400'
                               : 'bg-[#FFD700]/20 text-[#FFD700]'
                           }`}
                         >
-                          {inv.status === 'active' ? 'ACTIVA' : 'PENDIENTE'}
+                          {inv.estado || 'PENDIENTE'}
                         </span>
+                        <span className="text-[10px] text-white/30">
+                          👁 {inv.views || 0} vistas
+                        </span>
+                        {inv.telefono && (
+                          <span className="text-[10px] text-white/30">
+                                                        📱 {inv.telefono}
+                          </span>
+                        )}
+                        {inv.email && (
+                          <span className="text-[10px] text-white/30">
+                            ✉️ {inv.email}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {inv.status !== 'active' && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {inv.estado !== 'ACTIVA' && inv.estado !== 'ELIMINADA' && (
                       <button
-                        onClick={() => handleActivate(inv.id)}
-                        className="px-4 py-2 rounded-lg bg-[#FFD700] text-[#0a0e27] font-bold text-sm hover:bg-[#e6c200] transition-colors"
+                        onClick={() => handleActivate(inv.slug)}
+                        className="px-3 py-1.5 rounded-lg bg-[#FFD700] text-[#0a0e27] font-bold text-xs hover:bg-[#e6c200] transition-colors"
                       >
                         Activar
                       </button>
                     )}
                     <button
+                      onClick={() => handleEdit(inv)}
+                      className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs hover:bg-white/10 transition-colors"
+                    >
+                      Editar
+                    </button>
+                    <button
                       onClick={() => copyLink(inv.slug)}
-                      className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs hover:bg-white/10 transition-colors"
                     >
                       Copiar link
+                    </button>
+                    {inv.telefono && (
+                      <button
+                        onClick={() => openWhatsApp(inv)}
+                        className="px-3 py-1.5 rounded-lg bg-[#22c55e]/20 border border-[#22c55e]/30 text-[#22c55e] text-xs hover:bg-[#22c55e]/30 transition-colors"
+                      >
+                        WhatsApp
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(inv.slug)}
+                      className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 transition-colors"
+                    >
+                      Eliminar
                     </button>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {/* Modal de edición */}
+        {editingSlug && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-[#1a1f3a] rounded-2xl border border-white/10 p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h3 className="text-xl font-bold text-[#FFD700] mb-4">Editar invitación</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-white/60 text-xs mb-1 block">Fecha</label>
+                  <input
+                    type="date"
+                    value={editForm.fecha}
+                    onChange={(e) => setEditForm({...editForm, fecha: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-[#FFD700]/50 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-white/60 text-xs mb-1 block">Hora</label>
+                  <input
+                    type="text"
+                    value={editForm.hora}
+                    onChange={(e) => setEditForm({...editForm, hora: e.target.value})}
+                    placeholder="15:00 - 19:00"
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-[#FFD700]/50 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-white/60 text-xs mb-1 block">Lugar</label>
+                  <input
+                    type="text"
+                    value={editForm.lugar}
+                    onChange={(e) => setEditForm({...editForm, lugar: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-[#FFD700]/50 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-white/60 text-xs mb-1 block">Mensaje</label>
+                  <textarea
+                    value={editForm.mensaje}
+                    onChange={(e) => setEditForm({...editForm, mensaje: e.target.value})}
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-[#FFD700]/50 focus:outline-none resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-white/60 text-xs mb-1 block">Equipo</label>
+                  <input
+                    type="text"
+                    value={editForm.equipo}
+                    onChange={(e) => setEditForm({...editForm, equipo: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-[#FFD700]/50 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-white/60 text-xs mb-1 block">Estado</label>
+                  <select
+                    value={editForm.estado}
+                    onChange={(e) => setEditForm({...editForm, estado: e.target.value})}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-[#FFD700]/50 focus:outline-none"
+                  >
+                    <option value="PENDIENTE">PENDIENTE</option>
+                    <option value="ACTIVA">ACTIVA</option>
+                    <option value="PAUSADA">PAUSADA</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex-1 py-2.5 rounded-lg bg-[#FFD700] text-[#0a0e27] font-bold text-sm hover:bg-[#e6c200] transition-colors"
+                >
+                  Guardar cambios
+                </button>
+                <button
+                  onClick={() => setEditingSlug(null)}
+                  className="flex-1 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
