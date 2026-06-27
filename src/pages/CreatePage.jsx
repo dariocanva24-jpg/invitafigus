@@ -108,50 +108,51 @@ export default function CreatePage() {
   }
 
   const handlePreview = async () => {
-  setIsLoading(true)
-  try {
-    await sendToGoogleForm({
-      nombre: formData.childName,
-      apellido: formData.honoreeName,
-      apodo: formData.nickname,
-      edad: formData.honoreeAge,
-      equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
-      fecha: formData.date,
-      hora: `${formData.startTime} - ${formData.endTime}`,
-      lugar: formData.location || formData.address,
-      lugar2: formData.location || formData.address,
-      contacto: `${formData.honoreeName || formData.childName} (padre/madre)`,
-      telefono: formData.contactWhatsApp,
-      email: formData.email,
-      mensaje: formData.message,
-      vestimenta: formData.dressCode
-    })
-  } catch (error) {
-    console.error('Error sendToGoogleForm:', error)
-  }
-
-  setTimeout(() => {
+    setIsLoading(true)
     try {
-      const invitation = createInvitation({
-        ...formData,
-        honoreeAge: parseInt(formData.honoreeAge),
-        time: `${formData.startTime} - ${formData.endTime}`,
-        slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
-        status: 'preview',
+      await sendToGoogleForm({
+        nombre: formData.childName,
+        apellido: formData.honoreeName,
+        apodo: formData.nickname,
+        edad: formData.honoreeAge,
+        equipo: TEAMS.find(t => t.id === formData.team)?.name || formData.team,
+        fecha: formData.date,
+        hora: `${formData.startTime} - ${formData.endTime}`,
+        lugar: formData.location || formData.address,
+        lugar2: formData.location || formData.address,
+        contacto: `${formData.honoreeName || formData.childName} (padre/madre)`,
+        telefono: formData.contactWhatsApp,
+        email: formData.email,
+        mensaje: formData.message,
+        vestimenta: formData.dressCode
       })
-      setCreatedInvitation(invitation)
-      setStep(6)
-      setIsLoading(false)
     } catch (error) {
-      console.error('Error en createInvitation:', error)
-      setIsLoading(false)
+      console.error('Error sendToGoogleForm:', error)
     }
-  }, 2500)
-}
+
+    setTimeout(() => {
+      try {
+        const invitation = createInvitation({
+          ...formData,
+          honoreeAge: parseInt(formData.honoreeAge),
+          time: `${formData.startTime} - ${formData.endTime}`,
+          slug: `${formData.childName.toLowerCase().replace(/\s+/g, '-')}-${formData.honoreeAge}-${formData.team}`,
+          status: 'preview',
+        })
+        setCreatedInvitation(invitation)
+        setStep(6)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error en createInvitation:', error)
+        setIsLoading(false)
+      }
+    }, 2500)
+  }
 
   const handleActivate = () => {
     window.open('https://mpago.la/1X2RD5k', '_blank')
     setShowPaymentModal(false)
+    setStep(7) // ← NUEVO: va a la pantalla final de WhatsApp
   }
 
   const updateField = (field, value) => {
@@ -165,13 +166,13 @@ export default function CreatePage() {
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => step > 1 && step !== 6 ? handleBack() : navigate('/')}
+              onClick={() => step > 1 && step !== 6 && step !== 7 ? handleBack() : navigate('/')}
               className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
             >
-              {step > 1 && step !== 6 ? <ChevronLeft size={20} /> : <X size={20} />}
+              {step > 1 && step !== 6 && step !== 7 ? <ChevronLeft size={20} /> : <X size={20} />}
             </button>
             <div>
-              {step !== 6 && (
+              {step !== 6 && step !== 7 && (
                 <>
                   <span className="text-[10px] text-white/30 tracking-widest uppercase">Paso {step} / {totalSteps}</span>
                   <div className="flex gap-1 mt-1">
@@ -186,6 +187,9 @@ export default function CreatePage() {
               )}
               {step === 6 && (
                 <span className="text-[10px] text-[#FFD700] tracking-widest uppercase">Preview</span>
+              )}
+              {step === 7 && (
+                <span className="text-[10px] text-green-400 tracking-widest uppercase">¡Listo!</span>
               )}
             </div>
           </div>
@@ -395,6 +399,65 @@ export default function CreatePage() {
                   Una vez que pagues, envianos el comprobante por WhatsApp y te enviamos el link definitivo en minutos.
                 </p>
               </motion.div>
+            </motion.div>
+          )}
+
+          {/* ============================================
+              NUEVO: STEP 7 - Pantalla final WhatsApp
+              ============================================ */}
+          {step === 7 && (
+            <motion.div 
+              key="step7" 
+              initial={{ opacity: 0, scale: 0.9 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              transition={{ duration: 0.6 }} 
+              className="space-y-8 text-center"
+            >
+              <motion.div 
+                initial={{ scale: 0 }} 
+                animate={{ scale: 1 }} 
+                transition={{ delay: 0.2, type: "spring" }} 
+                className="w-20 h-20 mx-auto rounded-full bg-green-500/20 flex items-center justify-center"
+              >
+                <Check size={40} className="text-green-400" />
+              </motion.div>
+              
+              <div>
+                <h2 className="text-3xl font-black font-bebas tracking-wider text-white">
+                  ¡Tu pedido fue recibido!
+                </h2>
+                <p className="text-white/40 text-sm mt-3 max-w-xs mx-auto">
+                  Solo falta un paso. Envianos la foto del cumpleañero por WhatsApp para completar tu invitación.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <a 
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=¡Hola!%20Acabo%20de%20pagar%20mi%20invitación%20InvitaFigus.%20Te%20envío%20la%20foto%20del%20cumpleañero.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 rounded-xl bg-[#25D366] text-white font-bold text-lg tracking-wide hover:opacity-90 transition-all shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-3"
+                >
+                  <span className="text-2xl">📷</span>
+                  Enviar foto por WhatsApp
+                </a>
+                
+                <p className="text-white/30 text-xs">
+                  Te respondemos en minutos con el link definitivo de tu invitación.
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-white/10">
+                <p className="text-white/20 text-xs">
+                  ¿Ya enviaste la foto?{' '}
+                  <button 
+                    onClick={() => navigate('/')}
+                    className="text-[#FFD700] hover:underline"
+                  >
+                    Volver al inicio
+                  </button>
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -2,14 +2,12 @@
 // INVITAFIGUS - CLIENTE API PARA GOOGLE SHEETS
 // ============================================
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOfgvIPsnXLqUJFamQLIYT4Gp2uFwoAa9bmrTHFWUDB1QuP5VC41Q5J9wgJ6AGz1JebA/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEYDyS7rEW_GVnTlsNPamRo8l0xaeNYMo6V-jmBV-wrYy_uJq4V0-9PDBLu7Y_XtUlcA/exec';
 
-/**
- * Obtiene todas las invitaciones (para el panel admin)
- */
 export async function fetchAllInvitations() {
   try {
-    const response = await fetch(`${SCRIPT_URL}?action=getAll`);
+    const cacheBuster = Date.now();
+    const response = await fetch(`${SCRIPT_URL}?action=getAll&_cb=${cacheBuster}`);
     const data = await response.json();
     
     if (!data.success) {
@@ -23,16 +21,14 @@ export async function fetchAllInvitations() {
   }
 }
 
-/**
- * Obtiene una invitación por slug (para InvitationPage)
- */
 export async function fetchInvitationBySlug(slug) {
   try {
-    const response = await fetch(`${SCRIPT_URL}?action=getBySlug&slug=${encodeURIComponent(slug)}`);
+    const cacheBuster = Date.now();
+    const response = await fetch(`${SCRIPT_URL}?action=getBySlug&slug=${encodeURIComponent(slug)}&_cb=${cacheBuster}`);
     const data = await response.json();
     
     if (!data.success) {
-      throw new Error(data.error || 'Invitación no encontrada');
+      throw new Error(data.error || 'Invitacion no encontrada');
     }
     
     return data.data;
@@ -42,9 +38,6 @@ export async function fetchInvitationBySlug(slug) {
   }
 }
 
-/**
- * Activa una invitación (cambia estado a ACTIVA)
- */
 export async function activateInvitationRemote(slug) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=updateStatus`, {
@@ -71,9 +64,6 @@ export async function activateInvitationRemote(slug) {
   }
 }
 
-/**
- * Elimina una invitación (soft delete - marca como ELIMINADA)
- */
 export async function deleteInvitationRemote(slug) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=deleteRow`, {
@@ -99,10 +89,7 @@ export async function deleteInvitationRemote(slug) {
   }
 }
 
-/**
- * Actualiza un campo de una invitación
- */
-export async function updateInvitationField(slug, field, value) {
+export async function updateInvitationField(rowIndex, field, value) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=updateField`, {
       method: 'POST',
@@ -110,7 +97,7 @@ export async function updateInvitationField(slug, field, value) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        slug,
+        rowIndex,
         field,
         value: value || '',
       }),
@@ -129,9 +116,6 @@ export async function updateInvitationField(slug, field, value) {
   }
 }
 
-/**
- * Incrementa el contador de views
- */
 export async function incrementViewsRemote(slug) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=incrementViews`, {
@@ -153,7 +137,6 @@ export async function incrementViewsRemote(slug) {
     return data.views;
   } catch (error) {
     console.error('Error incrementViewsRemote:', error);
-    // No lanzamos error para no romper la experiencia del usuario
     return null;
   }
 }

@@ -37,6 +37,9 @@ const InvitationPage = () => {
           const localData = JSON.parse(localStorage.getItem('invitafigus_data') || '{}');
           const localInv = localData.invitations?.find(inv => inv.slug === slug);
           
+          // ← FIX: Leer foto guardada desde el Admin
+          const fotoFromAdmin = localStorage.getItem(`foto_${slug}`);
+          
           // Mapear datos de Sheets al formato del frontend
           const mappedEvent = {
             id: `inv-${remoteEvent.slug}`,
@@ -54,7 +57,8 @@ const InvitationPage = () => {
             dressCode: remoteEvent.vestimenta,
             mapsUrl: remoteEvent.maps_url,
             contactWhatsApp: remoteEvent.telefono,
-            honoreePhoto: remoteEvent.foto_url || localInv?.honoreePhoto || '',
+            // ← FIX: Prioridad: foto_url de Sheets → foto del Admin → foto del wizard → vacío
+            honoreePhoto: remoteEvent.foto_url || fotoFromAdmin || localInv?.honoreePhoto || '',
             message: remoteEvent.mensaje,
             status: remoteEvent.estado?.toLowerCase(),
             views: remoteEvent.views,

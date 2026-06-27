@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import InvitationPage from './pages/InvitationPage'
 import CreatePage from './pages/CreatePage'
 import AdminPage from './pages/AdminPage'
+import PhotoUploadPOC from './components/poc/PhotoUploadPOC';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/invitacion/:slug" element={<InvitationPage />} />
         <Route path="/crear" element={<CreatePage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/poc-foto" element={<PhotoUploadPOC />} />
       </Routes>
     </AppProvider>
   )
