@@ -109,12 +109,16 @@ export default function AdminPage() {
 
   const handleSaveEdit = async () => {
     try {
-      for (const [field, value] of Object.entries(editForm)) {
-        if (field !== 'foto_local') {
-          await updateInvitationField(editingRowIndex, field, value)
+      // 1. Guardar SOLO campos de texto en Google Sheets (excluir foto_local)
+      const textFields = ['fecha', 'hora', 'lugar', 'mensaje', 'equipo', 'estado', 'foto_url']
+      
+      for (const field of textFields) {
+        if (editForm[field] !== undefined && editForm[field] !== '') {
+          await updateInvitationField(editingRowIndex, field, editForm[field])
         }
       }
       
+      // 2. Guardar foto SOLO en localStorage (no enviar a Sheets)
       if (editForm.foto_local) {
         localStorage.setItem(`foto_${editingSlug}`, editForm.foto_local)
       }
@@ -408,7 +412,19 @@ export default function AdminPage() {
                   </select>
                 </div>
                 
-                {/* NUEVO: Selector de imagen */}
+                {/* Campo URL de foto (opcional, para compatibilidad futura) */}
+                <div>
+                  <label className="text-white/60 text-xs mb-1 block">URL de foto (Drive) - opcional</label>
+                  <input
+                    type="text"
+                    value={editForm.foto_url || ''}
+                    onChange={(e) => setEditForm({...editForm, foto_url: e.target.value})}
+                    placeholder="https://drive.google.com/uc?export=view&id=..."
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-[#FFD700]/50 focus:outline-none"
+                  />
+                </div>
+                
+                {/* Selector de imagen local */}
                 <div>
                   <label className="text-white/60 text-xs mb-1 block">Foto del homenajeado</label>
                   

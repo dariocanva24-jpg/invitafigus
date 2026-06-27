@@ -90,30 +90,45 @@ export async function deleteInvitationRemote(slug) {
 }
 
 export async function updateInvitationField(rowIndex, field, value) {
-  try {
-    const response = await fetch(`${SCRIPT_URL}?action=updateField`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        rowIndex,
-        field,
-        value: value || '',
-      }),
-    });
-    
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Error al actualizar');
+  const maxRetries = 2;
+  let lastError;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      const response = await fetch(`${SCRIPT_URL}?action=updateField`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          rowIndex,
+          field,
+          value: value || '',
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Error al actualizar');
+      }
+      
+      return data;
+      
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      }
     }
-    
-    return data;
-  } catch (error) {
-    console.error('Error updateInvitationField:', error);
-    throw error;
   }
+  
+  throw lastError;
 }
 
 export async function incrementViewsRemote(slug) {
