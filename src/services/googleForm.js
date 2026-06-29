@@ -11,7 +11,7 @@ const ENTRIES = {
   contacto: 'entry.1263783837',
   telefono: 'entry.65123469',
   email: 'entry.2118290222',
-  apellido: 'entry.2016938440',
+  apellido: 'entry.251286534'
   apodo: 'entry.64032990',
   mensaje: 'entry.1565072136',
   vestimenta: 'entry.1597447155'
