@@ -45,7 +45,7 @@ const InvitationPage = () => {
             id: `inv-${remoteEvent.slug}`,
             slug: remoteEvent.slug,
             childName: remoteEvent.nombre,
-            honoreeName: remoteEvent.apellido,
+            honoreeName: remoteEvent.apellido || remoteEvent['Apellido'] || remoteEvent['Apellido '],
             nickname: remoteEvent.apodo,
             age: remoteEvent.edad,
             honoreeAge: remoteEvent.edad,
