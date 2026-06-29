@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 export default function EventInfo({ event }) {
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
-    const d = new Date(dateStr + 'T00:00:00')
+    const d = new Date(dateStr)
     return d.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   }
 
