@@ -71,14 +71,15 @@ export default function AdminPage() {
     setEditingSlug(inv.slug)
     setEditingRowIndex(inv.rowIndex)
     setEditForm({
-      fecha: inv.fecha || '',
-      hora: inv.hora || '',
-      lugar: inv.lugar || '',
-      mensaje: inv.mensaje || '',
-      equipo: inv.equipo || '',
-      estado: inv.estado || 'PENDIENTE',
-      foto_url: inv.foto_url || '',
-    })
+  fecha: inv.fecha || '',
+  hora: inv.hora || '',
+  lugar: inv.lugar || '',
+  mensaje: inv.mensaje || '',
+  equipo: inv.equipo || '',
+  estado: inv.estado || 'PENDIENTE',
+  foto_url: inv.foto_url || '',
+  apellido: inv.apellido || '',
+})
   }
 
   const handleSaveEdit = async () => {
