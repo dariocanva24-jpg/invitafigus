@@ -11,7 +11,7 @@ const ENTRIES = {
   contacto: 'entry.1263783837',
   telefono: 'entry.65123469',
   email: 'entry.2118290222',
-  apellido: 'entry.251286534'
+  apellido: 'entry.251286534',
   apodo: 'entry.64032990',
   mensaje: 'entry.1565072136',
   vestimenta: 'entry.1597447155'
@@ -38,6 +38,8 @@ export function sendToGoogleForm(data) {
     formData.append('fvv', '1');
     formData.append('draftResponse', '[]');
     formData.append('pageHistory', '0');
+
+    console.log([...formData.entries()]);
 
     fetch(`https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`, {
       method: 'POST',
