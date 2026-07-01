@@ -9,6 +9,18 @@ export default function RSVPForm({ event }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     setSubmitted(true)
+    
+    // ← FIX: Abrir WhatsApp con mensaje de confirmación
+    if (event?.contactWhatsApp && form.status === 'confirmed') {
+      const phone = String(event.contactWhatsApp || '').replace(/\D/g, '')
+      const message = encodeURIComponent(
+        `¡Hola! Confirmo mi asistencia al cumple de ${event.childName || ''}.\n` +
+        `Nombre: ${form.name}\n` +
+        `Acompañantes: ${form.guests}\n` +
+        (form.notes ? `Notas: ${form.notes}` : '')
+      )
+      window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
+    }
   }
 
   const incrementGuests = () => {
@@ -48,7 +60,7 @@ export default function RSVPForm({ event }) {
         <p className="text-green-200/80">Gracias por confirmar tu asistencia.</p>
         {event?.contactWhatsApp && (
           <a
-            href={`https://wa.me/${event.contactWhatsApp.replace(/\D/g, '')}`}
+            href={`https://wa.me/${String(event.contactWhatsApp || '').replace(/\D/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-full font-bold text-white"
@@ -139,7 +151,6 @@ export default function RSVPForm({ event }) {
           </div>
         </div>
         
-        {/* ========== BOTONES +/- SIEMPRE VISIBLES ========== */}
         {form.status === 'confirmed' && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}

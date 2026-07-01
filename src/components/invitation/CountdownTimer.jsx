@@ -6,15 +6,28 @@ export default function CountdownTimer({ date, time }) {
 
   useEffect(() => {
     if (!date || date === '') return
+    
     const calc = () => {
-      const startHour = time?.split(' - ')[0] || '00:00'
-const target = new Date(`${date}T${startHour}:00`)
-if (isNaN(target.getTime())) return
-      const diff = target - new Date()
+      // ← FIX: Parsear fecha correctamente
+      let targetDate
+      
+      if (typeof date === 'string') {
+        // Si viene como "2026-07-04T03:00:00.000Z" o "2026-07-04"
+        const dateOnly = date.split('T')[0] // "2026-07-04"
+        const startHour = time?.split(' - ')[0] || '00:00'
+        targetDate = new Date(`${dateOnly}T${startHour}:00`)
+      } else {
+        targetDate = new Date(date)
+      }
+      
+      if (isNaN(targetDate.getTime())) return
+      
+      const diff = targetDate - new Date()
       if (diff <= 0) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true })
         return
       }
+      
       setTimeLeft({
         days: Math.floor(diff / 86400000),
         hours: Math.floor((diff % 86400000) / 3600000),
@@ -23,6 +36,7 @@ if (isNaN(target.getTime())) return
         isExpired: false,
       })
     }
+    
     calc()
     const interval = setInterval(calc, 1000)
     return () => clearInterval(interval)
