@@ -41,7 +41,9 @@ export async function fetchInvitationBySlug(slug) {
 export async function activateInvitationRemote(rowIndex) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=updateStatus`, {
-      method: 'POST',
+      method: 'POST',      
+      redirect: 'follow',
+      credentials: 'omit',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -67,7 +69,9 @@ export async function activateInvitationRemote(rowIndex) {
 export async function deleteInvitationRemote(rowIndex) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=deleteRow`, {
-      method: 'POST',
+      method: 'POST',      
+      redirect: 'follow',
+      credentials: 'omit',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -99,7 +103,9 @@ export async function updateInvitationField(rowIndex, field, value) {
       const timeoutId = setTimeout(() => controller.abort(), 15000);
       
       const response = await fetch(`${SCRIPT_URL}?action=updateField`, {
-        method: 'POST',
+        method: 'POST',        
+        redirect: 'follow',
+        credentials: 'omit',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -134,7 +140,9 @@ export async function updateInvitationField(rowIndex, field, value) {
 export async function incrementViewsRemote(slug) {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=incrementViews`, {
-      method: 'POST',
+      method: 'POST',      
+      redirect: 'follow',
+      credentials: 'omit',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },

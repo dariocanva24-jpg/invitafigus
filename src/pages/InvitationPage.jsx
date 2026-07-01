@@ -24,29 +24,29 @@ const InvitationPage = () => {
   const [showCard, setShowCard] = useState(false);
   const [albumOpened, setAlbumOpened] = useState(false);
 
-  // Cargar invitación desde Google Sheets
   useEffect(() => {
     const loadInvitation = async () => {
       setLoading(true);
       try {
-        // Primero intentamos desde Google Sheets (fuente de verdad)
         const remoteEvent = await fetchInvitationBySlug(slug);
         
         if (remoteEvent) {
-          // Buscar foto en localStorage (fallback si no está en Sheets)
           const localData = JSON.parse(localStorage.getItem('invitafigus_data') || '{}');
           const localInv = localData.invitations?.find(inv => inv.slug === slug);
-          
-          // ← FIX: Leer foto guardada desde el Admin
           const fotoFromAdmin = localStorage.getItem(`foto_${slug}`);
           
-          // Mapear datos de Sheets al formato del frontend
+          // ← FIX: Leer campos con salto de linea al final (bug del Google Sheet)
+          const apellido = remoteEvent['Apellido\n'] || remoteEvent.Apellido || remoteEvent.apellido || remoteEvent['Apellido '] || '';
+          const apodo = remoteEvent['Apodo\n'] || remoteEvent.Apodo || remoteEvent.apodo || remoteEvent['Apodo '] || '';
+          const mensaje = remoteEvent['Mensaje\n'] || remoteEvent.Mensaje || remoteEvent.mensaje || remoteEvent['Mensaje '] || '';
+          const vestimenta = remoteEvent['Vestimenta\n'] || remoteEvent.Vestimenta || remoteEvent.vestimenta || remoteEvent['Vestimenta '] || '';
+          
           const mappedEvent = {
             id: `inv-${remoteEvent.slug}`,
             slug: remoteEvent.slug,
             childName: remoteEvent.nombre,
-            honoreeName: remoteEvent.apellido || remoteEvent['Apellido'] || remoteEvent['Apellido '],
-            nickname: remoteEvent.apodo,
+            honoreeName: apellido,
+            nickname: apodo,
             age: remoteEvent.edad,
             honoreeAge: remoteEvent.edad,
             team: remoteEvent.equipo?.toLowerCase().replace(/\s+/g, '-') || 'argentina',
@@ -54,27 +54,23 @@ const InvitationPage = () => {
             time: remoteEvent.hora,
             address: remoteEvent.lugar,
             location: remoteEvent.lugar,
-            dressCode: remoteEvent.vestimenta,
+            dressCode: vestimenta,
             mapsUrl: remoteEvent.maps_url,
             contactWhatsApp: remoteEvent.telefono,
-            // ← FIX: Prioridad: foto_url de Sheets → foto del Admin → foto del wizard → vacío
             honoreePhoto: remoteEvent.foto_url || fotoFromAdmin || localInv?.honoreePhoto || '',
-            message: remoteEvent.mensaje,
+            message: mensaje,
             status: remoteEvent.estado?.toLowerCase(),
             views: remoteEvent.views,
           };
           setEvent(mappedEvent);
           
-          // Incrementar views en Sheets (silencioso, no bloquea)
           incrementViewsRemote(slug).catch(() => {});
         } else {
-          // Fallback: buscar en localStorage (demo/preview)
           const localEvent = getEventBySlug(slug);
           setEvent(localEvent);
         }
       } catch (err) {
         console.error('Error loading invitation:', err);
-        // Fallback a localStorage
         const localEvent = getEventBySlug(slug);
         setEvent(localEvent);
         if (!localEvent) {
@@ -98,7 +94,6 @@ const InvitationPage = () => {
     navigate('/crear');
   };
 
-  // ========== LOADING ==========
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center">
@@ -110,7 +105,6 @@ const InvitationPage = () => {
     );
   }
 
-  // ========== SI NO EXISTE LA INVITACIÓN: PANTALLA COMERCIAL ==========
   if (!event) {
     return (
       <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center px-4">
@@ -145,7 +139,6 @@ const InvitationPage = () => {
     );
   }
 
-  // ========== INVITACIÓN EXISTE ==========
   return (
     <div className="min-h-screen bg-[#0a0e27] relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
