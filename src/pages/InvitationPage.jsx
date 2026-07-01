@@ -41,6 +41,14 @@ const InvitationPage = () => {
           const mensaje = remoteEvent['Mensaje\n'] || remoteEvent.Mensaje || remoteEvent.mensaje || remoteEvent['Mensaje '] || '';
           const vestimenta = remoteEvent['Vestimenta\n'] || remoteEvent.Vestimenta || remoteEvent.vestimenta || remoteEvent['Vestimenta '] || '';
           
+          // ← FIX: Agregar codigo de pais al telefono
+          const telefono = (() => {
+            let phone = String(remoteEvent.telefono || remoteEvent['Telefono\n'] || remoteEvent.Telefono || remoteEvent['Telefono '] || '').replace(/\D/g, '');
+            if (phone.startsWith('0')) phone = phone.substring(1);
+            if (!phone.startsWith('54')) phone = '54' + phone;
+            return phone;
+          })();
+          
           const mappedEvent = {
             id: `inv-${remoteEvent.slug}`,
             slug: remoteEvent.slug,
@@ -56,7 +64,7 @@ const InvitationPage = () => {
             location: remoteEvent.lugar,
             dressCode: vestimenta,
             mapsUrl: remoteEvent.maps_url,
-            contactWhatsApp: remoteEvent.telefono,
+            contactWhatsApp: telefono,
             honoreePhoto: remoteEvent.foto_url || fotoFromAdmin || localInv?.honoreePhoto || '',
             message: mensaje,
             status: remoteEvent.estado?.toLowerCase(),
@@ -207,7 +215,7 @@ const InvitationPage = () => {
               transition={{ duration: 0.6, delay: 0.5 }}
               className="mb-6"
             >
-              <CountdownTimer date={event.date} />
+              <CountdownTimer date={event.date} time={event.time} />
             </motion.div>
           )}
         </AnimatePresence>
